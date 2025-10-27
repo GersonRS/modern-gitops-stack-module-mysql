@@ -2,24 +2,6 @@
 ## Standard variables
 #######################
 
-variable "project_source_repo" {
-  description = "Repository allowed to be scraped in this AppProject."
-  type        = string
-  default     = "https://github.com/GersonRS/modern-gitops-stack-module-postgresql.git"
-}
-
-variable "namespace" {
-  description = "Namespace where the applications's Kubernetes resources should be created. Namespace will be created in case it doesn't exist."
-  type        = string
-  default     = "database"
-}
-
-variable "argocd_namespace" {
-  description = "Namespace used by Argo CD where the Application and AppProject resources should be created."
-  type        = string
-  default     = "argocd"
-}
-
 variable "cluster_name" {
   description = "Name given to the cluster. Value used for naming some the resources created by the module."
   type        = string
@@ -30,6 +12,11 @@ variable "base_domain" {
   type        = string
 }
 
+variable "argocd_namespace" {
+  description = "Namespace used by Argo CD where the Application and AppProject resources should be created."
+  type        = string
+  default     = "argocd"
+}
 variable "subdomain" {
   description = "Subdomain of the cluster. Value used for the ingress' URL of the application."
   type        = string
@@ -58,19 +45,25 @@ variable "destination_cluster" {
 variable "target_revision" {
   description = "Override of target revision of the application chart."
   type        = string
-  default     = "v2.7.0" # x-release-please-version
+  default     = "v1.0.0" # x-release-please-version
 }
 
 variable "cluster_issuer" {
   description = "SSL certificate issuer to use. Usually you would configure this value as `letsencrypt-staging` or `letsencrypt-prod` on your root `*.tf` files."
   type        = string
-  default     = "selfsigned-issuer"
+  default     = "ca-issuer"
+}
+
+variable "namespace" {
+  description = "Namespace where the applications's Kubernetes resources should be created. Namespace will be created in case it doesn't exist."
+  type        = string
+  default     = "database"
 }
 
 variable "enable_service_monitor" {
   description = "Enable Prometheus ServiceMonitor in the Helm chart."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "helm_values" {
@@ -147,10 +140,4 @@ variable "debug" {
   description = "Enable debug mode"
   type        = bool
   default     = false
-}
-
-variable "reflection_namespaces" {
-  description = "Namespaces where the replication secrets should be reflected."
-  type        = list(string)
-  default     = []
 }

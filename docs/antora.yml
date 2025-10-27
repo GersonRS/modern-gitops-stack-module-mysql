@@ -1,6 +1,6 @@
 ---
-name: "minio"
-title: "MinIO Module"
+name: "mysql"
+title: "MySQL Module"
 version: true
 start_page: README.adoc
 nav:

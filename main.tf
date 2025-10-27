@@ -19,8 +19,8 @@ resource "argocd_project" "this" {
   }
 
   spec {
-    description  = "MySQL application project for cluster ${var.destination_cluster}"
-    source_repos = [var.project_source_repo]
+    description  = "Postgres application project for cluster ${var.destination_cluster}"
+    source_repos = ["https://github.com/GersonRS/modern-gitops-stack-module-mysql.git"]
 
 
     destination {
@@ -54,8 +54,8 @@ resource "argocd_application" "this" {
   }
 
   timeouts {
-    create = "15m"
-    delete = "15m"
+    create = "5m"
+    delete = "5m"
   }
 
   wait = var.app_autosync == { "allow_empty" = tobool(null), "prune" = tobool(null), "self_heal" = tobool(null) } ? false : true
@@ -64,11 +64,12 @@ resource "argocd_application" "this" {
     project = var.argocd_project == null ? argocd_project.this[0].metadata.0.name : var.argocd_project
 
     source {
-      repo_url        = var.project_source_repo
+      repo_url        = "https://github.com/GersonRS/modern-gitops-stack-module-mysql.git"
       path            = "charts/mysql"
       target_revision = var.target_revision
       helm {
-        values = data.utils_deep_merge_yaml.values.output
+        release_name = "mysql"
+        values       = data.utils_deep_merge_yaml.values.output
       }
     }
 
@@ -95,33 +96,17 @@ resource "argocd_application" "this" {
         }
         limit = "5"
       }
-
-      sync_options = [
-        "CreateNamespace=true"
-      ]
-
-
     }
   }
 
   depends_on = [
     resource.null_resource.dependencies,
+    resource.kubernetes_secret.mysql_secret,
   ]
 }
 
 resource "null_resource" "this" {
   depends_on = [
     resource.argocd_application.this,
-  ]
-}
-
-data "kubernetes_service" "mysql" {
-  metadata {
-    name      = "mysql"
-    namespace = var.namespace
-  }
-
-  depends_on = [
-    null_resource.this
   ]
 }
