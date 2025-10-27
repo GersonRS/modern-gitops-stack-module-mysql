@@ -5,7 +5,7 @@
 
 The following requirements are needed by this module:
 
-- [[requirement_argocd]] <<requirement_argocd,argocd>> (>= 6)
+- [[requirement_argocd]] <<requirement_argocd,argocd>> (>= 7)
 
 - [[requirement_null]] <<requirement_null,null>> (>= 3)
 
@@ -17,15 +17,13 @@ The following requirements are needed by this module:
 
 The following providers are used by this module:
 
-- [[provider_kubernetes]] <<provider_kubernetes,kubernetes>>
-
 - [[provider_random]] <<provider_random,random>> (>= 3)
 
-- [[provider_argocd]] <<provider_argocd,argocd>> (>= 6)
+- [[provider_null]] <<provider_null,null>> (>= 3)
+
+- [[provider_argocd]] <<provider_argocd,argocd>> (>= 7)
 
 - [[provider_utils]] <<provider_utils,utils>> (>= 1)
-
-- [[provider_null]] <<provider_null,null>> (>= 3)
 
 === Resources
 
@@ -33,12 +31,9 @@ The following resources are used by this module:
 
 - https://registry.terraform.io/providers/argoproj-labs/argocd/latest/docs/resources/application[argocd_application.this] (resource)
 - https://registry.terraform.io/providers/argoproj-labs/argocd/latest/docs/resources/project[argocd_project.this] (resource)
-- https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace[kubernetes_namespace.postgresql_namespace] (resource)
-- https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret[kubernetes_secret.postgresql_secret] (resource)
 - https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource[null_resource.dependencies] (resource)
 - https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource[null_resource.this] (resource)
 - https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password[random_password.password_secret] (resource)
-- https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/service[kubernetes_service.postgresql] (data source)
 - https://registry.terraform.io/providers/cloudposse/utils/latest/docs/data-sources/deep_merge_yaml[utils_deep_merge_yaml.values] (data source)
 
 === Required Inputs
@@ -60,6 +55,14 @@ Type: `string`
 === Optional Inputs
 
 The following input variables are optional (have default values):
+
+==== [[input_argocd_namespace]] <<input_argocd_namespace,argocd_namespace>>
+
+Description: Namespace used by Argo CD where the Application and AppProject resources should be created.
+
+Type: `string`
+
+Default: `"argocd"`
 
 ==== [[input_subdomain]] <<input_subdomain,subdomain>>
 
@@ -99,7 +102,7 @@ Description: Override of target revision of the application chart.
 
 Type: `string`
 
-Default: `"v1.0.0"`
+Default: `"v1.1.0"`
 
 ==== [[input_cluster_issuer]] <<input_cluster_issuer,cluster_issuer>>
 
@@ -107,7 +110,15 @@ Description: SSL certificate issuer to use. Usually you would configure this val
 
 Type: `string`
 
-Default: `"selfsigned-issuer"`
+Default: `"ca-issuer"`
+
+==== [[input_namespace]] <<input_namespace,namespace>>
+
+Description: Namespace where the applications's Kubernetes resources should be created. Namespace will be created in case it doesn't exist.
+
+Type: `string`
+
+Default: `"database"`
 
 ==== [[input_enable_service_monitor]] <<input_enable_service_monitor,enable_service_monitor>>
 
@@ -115,7 +126,7 @@ Description: Enable Prometheus ServiceMonitor in the Helm chart.
 
 Type: `bool`
 
-Default: `true`
+Default: `false`
 
 ==== [[input_helm_values]] <<input_helm_values,helm_values>>
 
@@ -157,6 +168,61 @@ Type: `map(string)`
 
 Default: `{}`
 
+==== [[input_replicas]] <<input_replicas,replicas>>
+
+Description: Number of replicas for module
+
+Type: `number`
+
+Default: `1`
+
+==== [[input_resources]] <<input_resources,resources>>
+
+Description: Resource limits and requests for module components. Follow the style on https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/[official documentation] to understand the format of the values.
+
+IMPORTANT: These are not production values. You should always adjust them to your needs.
+
+Type:
+[source,hcl]
+----
+object({
+    requests = optional(object({
+      cpu    = optional(string, "100m")
+      memory = optional(string, "256Mi")
+    }), {})
+    limits = optional(object({
+      cpu    = optional(string, "1000m")
+      memory = optional(string, "512Mi")
+    }), {})
+  })
+----
+
+Default: `{}`
+
+==== [[input_databases]] <<input_databases,databases>>
+
+Description: List databases aditional
+
+Type: `list(string)`
+
+Default: `[]`
+
+==== [[input_persistence_size]] <<input_persistence_size,persistence_size>>
+
+Description: Size of the persistent volume claim
+
+Type: `number`
+
+Default: `5`
+
+==== [[input_debug]] <<input_debug,debug>>
+
+Description: Enable debug mode
+
+Type: `bool`
+
+Default: `false`
+
 === Outputs
 
 The following outputs are exported:
@@ -171,15 +237,15 @@ Description: n/a
 
 ==== [[output_cluster_dns]] <<output_cluster_dns,cluster_dns>>
 
-Description: Postgres cluster dns
+Description: mysql cluster dns
 
 ==== [[output_cluster_ip]] <<output_cluster_ip,cluster_ip>>
 
-Description: Postgres Cluster IPs
+Description: mysql cluster ip internal
 
 ==== [[output_external_ip]] <<output_external_ip,external_ip>>
 
-Description: Postgres External IPs
+Description: Mysql External IPs
 // END_TF_DOCS
 
 === Reference in table format 
@@ -193,7 +259,7 @@ Description: Postgres External IPs
 [cols="a,a",options="header,autowidth"]
 |===
 |Name |Version
-|[[requirement_argocd]] <<requirement_argocd,argocd>> |>= 6
+|[[requirement_argocd]] <<requirement_argocd,argocd>> |>= 7
 |[[requirement_null]] <<requirement_null,null>> |>= 3
 |[[requirement_random]] <<requirement_random,random>> |>= 3
 |[[requirement_utils]] <<requirement_utils,utils>> |>= 1
@@ -204,10 +270,9 @@ Description: Postgres External IPs
 [cols="a,a",options="header,autowidth"]
 |===
 |Name |Version
-|[[provider_kubernetes]] <<provider_kubernetes,kubernetes>> |n/a
 |[[provider_random]] <<provider_random,random>> |>= 3
+|[[provider_argocd]] <<provider_argocd,argocd>> |>= 7
 |[[provider_utils]] <<provider_utils,utils>> |>= 1
-|[[provider_argocd]] <<provider_argocd,argocd>> |>= 6
 |[[provider_null]] <<provider_null,null>> |>= 3
 |===
 
@@ -218,12 +283,9 @@ Description: Postgres External IPs
 |Name |Type
 |https://registry.terraform.io/providers/argoproj-labs/argocd/latest/docs/resources/application[argocd_application.this] |resource
 |https://registry.terraform.io/providers/argoproj-labs/argocd/latest/docs/resources/project[argocd_project.this] |resource
-|https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace[kubernetes_namespace.postgresql_namespace] |resource
-|https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret[kubernetes_secret.postgresql_secret] |resource
 |https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource[null_resource.dependencies] |resource
 |https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource[null_resource.this] |resource
 |https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password[random_password.password_secret] |resource
-|https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/service[kubernetes_service.postgresql] |data source
 |https://registry.terraform.io/providers/cloudposse/utils/latest/docs/data-sources/deep_merge_yaml[utils_deep_merge_yaml.values] |data source
 |===
 
@@ -243,6 +305,12 @@ Description: Postgres External IPs
 |`string`
 |n/a
 |yes
+
+|[[input_argocd_namespace]] <<input_argocd_namespace,argocd_namespace>>
+|Namespace used by Argo CD where the Application and AppProject resources should be created.
+|`string`
+|`"argocd"`
+|no
 
 |[[input_subdomain]] <<input_subdomain,subdomain>>
 |Subdomain of the cluster. Value used for the ingress' URL of the application.
@@ -271,19 +339,25 @@ Description: Postgres External IPs
 |[[input_target_revision]] <<input_target_revision,target_revision>>
 |Override of target revision of the application chart.
 |`string`
-|`"v1.0.0"`
+|`"v1.1.0"`
 |no
 
 |[[input_cluster_issuer]] <<input_cluster_issuer,cluster_issuer>>
 |SSL certificate issuer to use. Usually you would configure this value as `letsencrypt-staging` or `letsencrypt-prod` on your root `*.tf` files.
 |`string`
-|`"selfsigned-issuer"`
+|`"ca-issuer"`
+|no
+
+|[[input_namespace]] <<input_namespace,namespace>>
+|Namespace where the applications's Kubernetes resources should be created. Namespace will be created in case it doesn't exist.
+|`string`
+|`"database"`
 |no
 
 |[[input_enable_service_monitor]] <<input_enable_service_monitor,enable_service_monitor>>
 |Enable Prometheus ServiceMonitor in the Helm chart.
 |`bool`
-|`true`
+|`false`
 |no
 
 |[[input_helm_values]] <<input_helm_values,helm_values>>
@@ -324,6 +398,54 @@ object({
 |`{}`
 |no
 
+|[[input_replicas]] <<input_replicas,replicas>>
+|Number of replicas for module
+|`number`
+|`1`
+|no
+
+|[[input_resources]] <<input_resources,resources>>
+|Resource limits and requests for module components. Follow the style on https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/[official documentation] to understand the format of the values.
+
+IMPORTANT: These are not production values. You should always adjust them to your needs.
+
+|
+
+[source]
+----
+object({
+    requests = optional(object({
+      cpu    = optional(string, "100m")
+      memory = optional(string, "256Mi")
+    }), {})
+    limits = optional(object({
+      cpu    = optional(string, "1000m")
+      memory = optional(string, "512Mi")
+    }), {})
+  })
+----
+
+|`{}`
+|no
+
+|[[input_databases]] <<input_databases,databases>>
+|List databases aditional
+|`list(string)`
+|`[]`
+|no
+
+|[[input_persistence_size]] <<input_persistence_size,persistence_size>>
+|Size of the persistent volume claim
+|`number`
+|`5`
+|no
+
+|[[input_debug]] <<input_debug,debug>>
+|Enable debug mode
+|`bool`
+|`false`
+|no
+
 |===
 
 = Outputs
@@ -333,9 +455,9 @@ object({
 |Name |Description
 |[[output_id]] <<output_id,id>> |ID to pass other modules in order to refer to this module as a dependency.
 |[[output_credentials]] <<output_credentials,credentials>> |n/a
-|[[output_cluster_dns]] <<output_cluster_dns,cluster_dns>> |Postgres cluster dns
-|[[output_cluster_ip]] <<output_cluster_ip,cluster_ip>> |Postgres Cluster IPs
-|[[output_external_ip]] <<output_external_ip,external_ip>> |Postgres External IPs
+|[[output_cluster_dns]] <<output_cluster_dns,cluster_dns>> |mysql cluster dns
+|[[output_cluster_ip]] <<output_cluster_ip,cluster_ip>> |mysql cluster ip internal
+|[[output_external_ip]] <<output_external_ip,external_ip>> |Mysql External IPs
 |===
 // END_TF_TABLES
 ====
